@@ -109,6 +109,22 @@ var Game = (function() {
         }
         return false;
     };
+    Game.prototype.init = function() {
+        this.placeFood();
+    };
+    Game.prototype.go = function() {
+        this.direction = this.tmpDirection;
+        this.move();
+        if (this.eat()) {
+            this.grow();
+            this.placeFood();
+        }
+        this.cuttail();
+        if (this.die()) {
+            return false;
+        }
+        return true;
+    };
     return Game;
 })();
 
@@ -211,21 +227,14 @@ var Run = (function() {
     };
     Run.prototype.run = function() {
         this.game = new Game(this);
-        this.game.placeFood();
+        this.game.init();
         this.start = true;
         var _this = this;
         this.whileID = setInterval(() => {
             if (_this.start) {
-                _this.game.direction = _this.game.tmpDirection;
-                _this.game.move();
-                if (_this.game.eat()) {
-                    _this.game.grow();
-                    _this.game.placeFood();
-                }
-                _this.game.cuttail();
-                if (_this.game.die()) {
+                if (!_this.game.go()) {
                     _this.game = new Game();
-                    _this.game.placeFood();
+                    _this.game.init();
                 }
                 _this.renderer.render(_this.game.positions, _this.game.food);
             }
