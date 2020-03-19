@@ -4,6 +4,8 @@ const DX = [-1, 0, 0, 1];
 const DY = [0, -1, 1, 0];
 const DS2 = ["l", "u", "d", "r"];
 const DS3 = ["h", "v", "lu", "ru", "ld", "rd"];
+// const SPD = [1000, 100, 75, 50, 25, 15, 10];
+const SPD = [1000, 100, 80, 60, 50, 40, 30];
 const DRS = (function() {
     var t = [];
     t[97] = 0;
@@ -129,6 +131,8 @@ var Game = (function() {
         this.direction = 1;
         this.tmpDirection = 1;
         this.food = [0, 0];
+        this.score = 0;
+        this.level = 1;
     }
     Game.prototype.placeFood = function() {
         while (true) {
@@ -193,6 +197,8 @@ var Game = (function() {
         if (this.die()) {
             return false;
         }
+        this.score = this.length - 5;
+        this.level = Math.min(6, Math.floor(1 + this.score / 5));
         return true;
     };
     return Game;
@@ -221,10 +227,12 @@ var Resource = (function() {
 var Renderer = (function() {
     function Renderer(_run) {
         this._run = _run;
-        this.scale = 16;
+        var w = window.innerWidth;
+        var h = window.innerHeight;
+        this.scale = Math.min(w / (N + 1), h / (M + 1));
         this.canvas = document.getElementById("canvas");
-        canvas.width = N * this.scale;
-        canvas.height = M * this.scale;
+        this.canvas.width = N * this.scale;
+        this.canvas.height = M * this.scale;
         this.ctx = canvas.getContext("2d");
         this.resourse = new Resource();
         CanvasRenderingContext2D.prototype._fill = function(color) {
@@ -263,8 +271,7 @@ var Renderer = (function() {
             this.resourse.add(`body${d}`, `./image/body${d}.png`);
         }
     };
-    Renderer.prototype.render = function(positions, food) {
-        this.ctx._fill("rgb(255,255,255)");
+    Renderer.prototype.renderBackground = function() {
         for (var i = 0; i < N; i += 8) {
             for (var j = 0; j < M; j += 8) {
                 this.ctx._image(
@@ -276,6 +283,8 @@ var Renderer = (function() {
                 );
             }
         }
+    };
+    Renderer.prototype.renderGame = function(positions, food) {
         for (var i = 0; i < positions.length; i++) {
             var sp = Utils.checkShape(
                 positions[i - 1],
@@ -318,6 +327,7 @@ var Input = (function() {
             if (e && _this.pressEvent[e.keyCode]) {
                 _this.pressEvent[e.keyCode](e.keyCode);
             }
+            // console.log("press", e.keyCode);
         };
     }
     Input.prototype.setEvent = function(f, codes) {
@@ -331,19 +341,11 @@ var Input = (function() {
 var Run = (function() {
     function Run() {
         this.start = false;
-        this.speed = 100;
         this.renderer = new Renderer(this);
         this.input = new Input(this);
     }
     Run.prototype.init = function() {
-        this.renderer.init();
         var _this = this;
-        this.input.setEvent(
-            function() {
-                _this.start = !_this.start;
-            },
-            [80, 112]
-        );
         this.input.setEvent(
             function(c) {
                 if (_this.start) {
@@ -352,24 +354,105 @@ var Run = (function() {
             },
             [97, 65, 119, 87, 100, 68, 115, 83]
         );
+        this.input.setEvent(
+            function() {
+                if (_this.start) {
+                    _this.pause();
+                    gamePause();
+                } else {
+                    _this.resume();
+                    gameResume();
+                }
+            },
+            [80, 112]
+        );
+        this.renderer.init();
     };
-    Run.prototype.run = function() {
+    Run.prototype.newGame = function() {
         this.game = new Game(this);
         this.game.init();
-        this.start = true;
-        var _this = this;
-        this.whileID = setInterval(() => {
-            if (_this.start) {
-                if (!_this.game.go()) {
-                    _this.game = new Game();
-                    _this.game.init();
-                }
-                _this.renderer.render(_this.game.positions, _this.game.food);
+        this.speed = SPD[this.game.level];
+    };
+    Run.prototype.gameLoop = function(_this) {
+        if (_this.start) {
+            if (!_this.game.go()) {
+                _this.pause();
+                gameOver();
             }
-        }, this.speed);
+        }
+        _this.renderer.renderBackground();
+        if (!_this.onIndex) {
+            _this.renderer.renderGame(_this.game.positions, _this.game.food);
+            updateInfo(_this.game.score, _this.game.level);
+        }
+        // if (_this.speed != SPD[_this.game.level]) {
+        //     clearInterval(_this.whileID);
+        //     _this.speed = SPD[_this.game.level];
+        //     _this.whileID = setInterval(() => {
+        //         _this.gameLoop(_this);
+        //     }, _this.speed);
+        // }
+        setTimeout(() => {
+            _this.gameLoop(_this);
+        }, SPD[_this.game.level]);
+    };
+    Run.prototype.run = function() {
+        this.newGame();
+        this.start = false;
+        this.onIndex = true;
+        var _this = this;
+        // this.whileID = setInterval(() => {
+        //     _this.gameLoop(_this);
+        // }, this.speed);
+        setTimeout(() => {
+            _this.gameLoop(_this);
+        }, SPD[this.game.level]);
+    };
+    Run.prototype.pause = function() {
+        this.start = false;
+    };
+    Run.prototype.resume = function() {
+        this.start = true;
+        this.onIndex = false;
     };
     return Run;
 })();
+
+/* UI */
+var DIV_wrap = document.getElementById("wrap");
+var IMG_try = document.getElementById("try");
+var IMG_pause = document.getElementById("pause");
+var DIV_info = document.getElementById("info");
+var SPAN_score = document.getElementById("score");
+var SPAN_level = document.getElementById("level");
+
+function start() {
+    _Run.newGame();
+    _Run.resume();
+    DIV_wrap.style.display = "none";
+    IMG_try.style.display = "none";
+    IMG_pause.style.display = "none";
+}
+
+function gameOver() {
+    IMG_try.style.display = "inline";
+}
+
+function gamePause() {
+    IMG_pause.style.display = "inline";
+}
+
+function gameResume() {
+    IMG_pause.style.display = "none";
+}
+
+function updateInfo(score, level) {
+    DIV_info.style.display = "block";
+    SPAN_score.innerHTML = `SCORE: ${score}`;
+    SPAN_level.innerHTML = `LEVEL: ${level}`;
+}
+
+/* Main */
 var _Run = new Run();
 _Run.init();
 _Run.run();

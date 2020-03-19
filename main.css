@@ -1,0 +1,64 @@
+* {
+    padding: 0px;
+    margin: 0px;
+}
+
+body {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    position: absolute;
+    background-color: #e9ecef;
+}
+
+#canvas {
+    position: relative;
+    top: 50%;
+    left: 50%;
+    transform: translateX(-50%) translateY(-50%);
+    box-shadow: 0px 0px 25px #000000;
+    border-radius: 3px;
+}
+
+#wrap {
+    position: fixed;
+    height: 80%;
+    top: 50%;
+    left: 50%;
+    transform: translateX(-50%) translateY(-50%);
+    text-align: center;
+}
+
+#try,
+#pause {
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    transform: translateX(-50%) translateY(-50%);
+    display: none;
+}
+
+#title {
+    height: 30%;
+}
+
+#start,
+#help,
+#try,
+#pause {
+    height: 20%;
+}
+
+#info {
+    position: fixed;
+    top: 0px;
+    left: 0px;
+    padding: 5px 5px;
+    font-family: "Courier New", Courier, monospace;
+    font-size: 20px;
+    display: none;
+}
+
+a {
+    cursor: default;
+}

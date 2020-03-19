@@ -5,12 +5,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gluttonous Snake - Leohh</title>
+    <link rel="stylesheet" href="main.css">
 </head>
 
 <body>
     <canvas id="canvas">
         Canvas is not supported QAQ...
     </canvas>
+    <div id="wrap">
+        <img id="title" src="./image/title.png"><br>
+        <img id="start" src="./image/start.png" onclick="start()"><br>
+        <a href="./help.html"><img id="help" src="./image/help.png"></a>
+    </div>
+    <img id="try" src="./image/tryagain.png" onclick="start()">
+    <img id="pause" src="./image/pause.png">
+    <div id="info">
+        <span id="score"></span><br>
+        <span id="level"></span>
+    </div>
     <script src="./main.js"></script>
 </body>
 
